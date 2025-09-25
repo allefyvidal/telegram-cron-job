@@ -1,0 +1,22 @@
+name: Telegram Cron Job
+
+on:
+  schedule:
+    # Executa todos os dias às 14:00 (2PM) UTC
+    # Você pode ajustar usando: https://crontab.guru
+    - cron: '0 14 * * *'
+  
+  # Permite executar manualmente
+  workflow_dispatch:
+
+jobs:
+  send-telegram:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Enviar mensagem para Telegram
+        run: |
+          curl -s -X POST \
+          "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.CHAT_ID }}" \
+          -d text="✅ Cron job executado com sucesso! 🕒"
