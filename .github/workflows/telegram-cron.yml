@@ -2,8 +2,7 @@ name: 🤖 Bot Alertas Bolsa
 
 on:
   schedule:
-    # A CADA 1 HORA em dias úteis (9h às 18h BRT)
-    - cron: '0 12-21 * * 1-5'  # 12h UTC = 9h BRT, 21h UTC = 18h BRT
+    - cron: '0 12-21 * * 1-5'  # A cada hora das 9h-18h BRT
 
 jobs:
   alertas-bolsa:
