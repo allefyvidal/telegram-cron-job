@@ -1,0 +1,22 @@
+{
+  "alertas": [
+    {
+      "ativo": "PETR4.SA",
+      "nome": "Petrobras",
+      "alerta_compra": 35.00,
+      "alerta_venda": 45.00
+    },
+    {
+      "ativo": "BTC-USD", 
+      "nome": "Bitcoin",
+      "alerta_compra": 40000,
+      "alerta_venda": 70000
+    },
+    {
+      "ativo": "USD-BRL",
+      "nome": "Dólar",
+      "alerta_compra": 4.80,
+      "alerta_venda": 5.50
+    }
+  ]
+}
