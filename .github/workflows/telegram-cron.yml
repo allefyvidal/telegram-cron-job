@@ -1,22 +1,29 @@
-name: Telegram Cron Job
+name: 🤖 Bot Alertas Bolsa
 
 on:
   schedule:
-    # Executa todos os dias às 14:00 (2PM) UTC
-    # Você pode ajustar usando: https://crontab.guru
-    - cron: '0 14 * * *'
-  
-  # Permite executar manualmente
+    # Verifica a cada 30 minutos em dias úteis (9h às 18h BRT)
+    - cron: '*/30 12-21 * * 1-5'
   workflow_dispatch:
 
 jobs:
-  send-telegram:
+  alertas-bolsa:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Enviar mensagem para Telegram
-        run: |
-          curl -s -X POST \
-          "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.CHAT_ID }}" \
-          -d text="✅ Cron job executado com sucesso! 🕒"
+      - name: 📥 Baixar código
+        uses: actions/checkout@v4
+        
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: 📦 Instalar yfinance
+        run: pip install yfinance requests
+        
+      - name: 🔍 Executar bot de alertas
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python bot_alertas.py
