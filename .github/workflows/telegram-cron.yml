@@ -2,8 +2,7 @@ name: 📈 Bot Bolsa 15min
 
 on:
   schedule:
-    # A cada 15 minutos durante horário de bolsa
-    - cron: '*/15 12-21 * * 1-5'  # Seg-Sex, 9h-18h BRT
+  - cron: '*/15 12-21 * * 1-5'  # A cada 15 min, Seg-Sex, 9h-18h BRT
   workflow_dispatch:
 
 jobs:
