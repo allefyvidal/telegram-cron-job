@@ -2,7 +2,7 @@ name: 📈 Bot Bolsa 5min
 
 on:
   schedule:
-    - cron: '*/5 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
+    - cron: '*/10 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
   workflow_dispatch:
 
 jobs:
