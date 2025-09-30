@@ -1,19 +1,43 @@
 {
   "alertas": [
     {
+      "ativo": "BHIA3.SA",
+      "nome": "Casas Bahia",
+      "alerta_compra": 5.00,
+      "alerta_venda": 8.00
+    },
+    {
+      "ativo": "PCAR3.SA", 
+      "nome": "Grupo Pão de Açúcar",
+      "alerta_compra": 3.50,
+      "alerta_venda": 6.00
+    },
+    {
+      "ativo": "COGN3.SA",
+      "nome": "Cogna Educação",
+      "alerta_compra": 2.50,
+      "alerta_venda": 4.00
+    },
+    {
+      "ativo": "IRBR3.SA",
+      "nome": "IRB Brasil RE",
+      "alerta_compra": 1.50,
+      "alerta_venda": 3.00
+    },
+    {
       "ativo": "PETR4.SA",
       "nome": "Petrobras",
       "alerta_compra": 35.00,
       "alerta_venda": 45.00
     },
     {
-      "ativo": "BTC-USD", 
-      "nome": "Bitcoin",
+      "ativo": "BTC-USD",
+      "nome": "Bitcoin", 
       "alerta_compra": 40000,
       "alerta_venda": 70000
     },
     {
-      "ativo": "USD-BRL",
+      "ativo": "BRL=X",
       "nome": "Dólar",
       "alerta_compra": 4.80,
       "alerta_venda": 5.50
