@@ -1,11 +1,13 @@
-name: 🤖 Bot Alertas Bolsa
+name: 📈 Bot Bolsa 15min
 
 on:
   schedule:
-    - cron: '0 12-21 * * 1-5'  # A cada hora das 9h-18h BRT
+    # A cada 15 minutos durante horário de bolsa
+    - cron: '*/15 12-21 * * 1-5'  # Seg-Sex, 9h-18h BRT
+  workflow_dispatch:
 
 jobs:
-  alertas-bolsa:
+  bolsa-15min:
     runs-on: ubuntu-latest
     
     steps:
@@ -17,10 +19,10 @@ jobs:
         with:
           python-version: '3.9'
           
-      - name: 📦 Instalar yfinance
+      - name: 📦 Instalar dependências
         run: pip install yfinance requests
         
-      - name: 🔍 Executar bot de alertas
+      - name: 🔍 Executar bot da bolsa
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
