@@ -27,7 +27,7 @@ def formatar_porcentagem(valor):
     else:
         return f"⚪ {valor:.2f}%"
 
-def buscar_precos_acoes():
+def buscar_relatorio_acoes():
     """Busca preços atuais e variação"""
     with open('alertas_config.json', 'r') as f:
         config = json.load(f)
@@ -50,15 +50,15 @@ def buscar_precos_acoes():
                 relatorio.append({
                     'nome': ativo_config['nome'],
                     'preco_atual': preco_atual,
-                    'variacao': variacao_percentual
+                    'variacao': variacao_percentual,
+                    'alerta_compra': ativo_config.get('alerta_compra', 0),
+                    'alerta_venda': ativo_config.get('alerta_venda', 0)
                 })
                 
-                print(f"✅ {ativo_config['nome']}: R$ {preco_atual:.2f} ({variacao_percentual:+.2f}%)")
-            else:
-                print(f"❌ {ativo_config['nome']}: Sem dados históricos")
+                print(f"{ativo_config['nome']}: R$ {preco_atual:.2f} ({variacao_percentual:+.2f}%)")
                     
         except Exception as e:
-            print(f"❌ Erro ao buscar {ativo_config['nome']}: {e}")
+            print(f"Erro ao buscar {ativo_config['nome']}: {e}")
     
     return relatorio
 
@@ -67,29 +67,33 @@ def criar_mensagem_relatorio(relatorio):
     if not relatorio:
         return "❌ Erro ao buscar dados das ações"
     
-    mensagem = "📊 **BOLSA AGORA**\n"
+    mensagem = "📊 **RELATÓRIO DE AÇÕES**\n"
     mensagem += f"⏰ {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
     
     for acao in relatorio:
+        # Verifica se está perto dos alertas (só se existirem)
+        alerta_extra = ""
+        if acao['alerta_compra'] > 0 and acao['preco_atual'] <= acao['alerta_compra'] * 1.05:
+            alerta_extra = " ⚠️ **PERTO COMPRA**"
+        elif acao['alerta_venda'] > 0 and acao['preco_atual'] >= acao['alerta_venda'] * 0.95:
+            alerta_extra = " ⚠️ **PERTO VENDA**"
+        
         mensagem += f"**{acao['nome']}**\n"
-        mensagem += f"💰 R$ {acao['preco_atual']:.2f} {formatar_porcentagem(acao['variacao'])}\n\n"
+        mensagem += f"💰 R$ {acao['preco_atual']:.2f} {formatar_porcentagem(acao['variacao'])}{alerta_extra}\n\n"
     
     mensagem += "---\n"
     mensagem += "🟢 Alta | 🔴 Baixa | ⚪ Estável\n"
-    mensagem += "🔄 Atualizado a cada 15min"
+    mensagem += "⚠️ Monitorando alertas automáticos"
     
     return mensagem
 
 def main():
-    print("📈 Buscando cotações da bolsa...")
-    relatorio = buscar_precos_acoes()
+    print("📈 Gerando relatório de ações...")
+    relatorio = buscar_relatorio_acoes()
     
-    if relatorio:
-        mensagem = criar_mensagem_relatorio(relatorio)
-        enviar_telegram(mensagem)
-        print("✅ Relatório enviado com sucesso!")
-    else:
-        print("❌ Nenhum dado encontrado")
+    mensagem = criar_mensagem_relatorio(relatorio)
+    enviar_telegram(mensagem)
+    print("Relatório enviado com sucesso!")
 
 if __name__ == "__main__":
     main()
