@@ -1,12 +1,12 @@
-name: 📈 Bot Bolsa 15min
+name: 📈 Bot Bolsa 5min
 
 on:
   schedule:
-  - cron: '*/1 12-21 * * 1-5'  # A cada 15 min, Seg-Sex, 9h-18h BRT
+    - cron: '*/5 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
   workflow_dispatch:
 
 jobs:
-  bolsa-15min:
+  bolsa-5min:
     runs-on: ubuntu-latest
     
     steps:
