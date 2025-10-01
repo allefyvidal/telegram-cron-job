@@ -1,8 +1,8 @@
-name: 🤖 Bot Bolsa 5min
+name: 🤖 Bot FRED Econômico
 
 on:
   schedule:
-    - cron: '*/5 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
+    - cron: '0 9,12,15,17 * * 1-5'  # 9h, 12h, 15h, 17h BRT (4x/dia)
   workflow_dispatch:
 
 jobs:
@@ -18,11 +18,12 @@ jobs:
         with:
           python-version: '3.9'
           
-      - name: 📦 Instalar dependências
-        run: pip install yfinance requests
+      - name: 📦 Instalar requests
+        run: pip install requests
         
-      - name: 🔍 Executar bot
+      - name: 🔍 Executar bot FRED
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python bot_alertas.py
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python bot_fred.py
