@@ -1,193 +1,139 @@
 """
-🤖 BOT ALERTAS BOLSA - Versão Melhorada
-Simples, rápido e confiável
+🤖 BOT ECONÔMICO - FRED API
+Dados oficiais do Federal Reserve
 """
 
 import os
-import json
 import requests
-import yfinance as yf
 from datetime import datetime
-from typing import List, Dict, Optional
 
-class BotBolsa:
-    def __init__(self, config_file: str = "config.json"):
-        self.config = self._carregar_config(config_file)
-        self.telegram_token = self.config['telegram']['bot_token']
-        self.telegram_chat_id = self.config['telegram']['chat_id']
-        
-    def _carregar_config(self, config_file: str) -> Dict:
-        """Carrega configurações com fallback inteligente"""
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            
-            # Substitui variáveis de ambiente
-            config['telegram']['bot_token'] = os.getenv(
-                'TELEGRAM_BOT_TOKEN', 
-                config['telegram']['bot_token'].replace('${TELEGRAM_BOT_TOKEN}', '')
-            )
-            config['telegram']['chat_id'] = os.getenv(
-                'TELEGRAM_CHAT_ID',
-                config['telegram']['chat_id'].replace('${TELEGRAM_CHAT_ID}', '')
-            )
-            
-            return config
-        except Exception as e:
-            print(f"❌ Erro ao carregar config: {e}")
-            return self._config_padrao()
+# Configurações
+BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+FRED_API_KEY = os.getenv('FRED_API_KEY')
+
+# Séries do FRED (verificadas e funcionais)
+SERIES_FRED = {
+    "Dólar": "DEXBZUS",           # USD/BRL
+    "Bitcoin": "CBBTCUSD",        # Bitcoin USD
+    "Selic": "SELIC",             # Taxa Selic
+    "IPCA": "CPIALTT01BRM659N",   # Inflação
+    "PIB Brasil": "BRALOCOSTORSTM", # PIB
+}
+
+def buscar_dados_fred():
+    """Busca dados econômicos no FRED"""
+    resultados = []
+    base_url = "https://api.stlouisfed.org/fred/series/observations"
     
-    def _config_padrao(self) -> Dict:
-        """Configuração padrão de fallback"""
-        return {
-            "telegram": {
-                "bot_token": os.getenv('TELEGRAM_BOT_TOKEN', ''),
-                "chat_id": os.getenv('TELEGRAM_CHAT_ID', '')
-            },
-            "acoes": [
-                {"ticker": "PETR4.SA", "nome": "Petrobras", "alerta_compra": 35, "alerta_venda": 45},
-                {"ticker": "VALE3.SA", "nome": "Vale", "alerta_compra": 60, "alerta_venda": 70}
-            ],
-            "config": {"intervalo_minutos": 15, "horario_mercado": True}
-        }
-
-    def buscar_cotacoes(self) -> List[Dict]:
-        """Busca cotações de todas as ações com tratamento robusto"""
-        resultados = []
-        
-        for acao in self.config['acoes']:
-            try:
-                ticker = yf.Ticker(acao['ticker'])
-                historico = ticker.history(period='2d')
-                
-                if len(historico) < 2:
-                    print(f"⚠️  {acao['nome']}: Dados insuficientes")
-                    continue
-                
-                preco_atual = historico['Close'].iloc[-1]
-                preco_anterior = historico['Close'].iloc[-2]
-                variacao = ((preco_atual - preco_anterior) / preco_anterior) * 100
-                
-                # Verifica alertas
-                alerta = self._verificar_alerta(acao, preco_atual)
-                
-                resultados.append({
-                    'nome': acao['nome'],
-                    'ticker': acao['ticker'],
-                    'preco': preco_atual,
-                    'variacao': variacao,
-                    'alerta': alerta
-                })
-                
-                print(f"✅ {acao['nome']}: R$ {preco_atual:.2f} ({variacao:+.2f}%)")
-                
-            except Exception as e:
-                print(f"❌ Erro em {acao['nome']}: {e}")
-                resultados.append({
-                    'nome': acao['nome'],
-                    'ticker': acao['ticker'], 
-                    'preco': 0,
-                    'variacao': 0,
-                    'alerta': f"Erro: {str(e)[:50]}"
-                })
-        
-        return resultados
-
-    def _verificar_alerta(self, acao: Dict, preco_atual: float) -> Optional[str]:
-        """Verifica se preço atingiu algum alerta"""
-        alerta_compra = acao.get('alerta_compra')
-        alerta_venda = acao.get('alerta_venda')
-        
-        if alerta_compra and preco_atual <= alerta_compra:
-            return f"🟢 COMPRA! Abaixo de R$ {alerta_compra:.2f}"
-        
-        if alerta_venda and preco_atual >= alerta_venda:
-            return f"🔴 VENDA! Acima de R$ {alerta_venda:.2f}"
-        
-        # Alerta de proximidade (5%)
-        if alerta_compra and preco_atual <= alerta_compra * 1.05:
-            return f"⚡ PERTO COMPRA! R$ {alerta_compra:.2f}"
-            
-        if alerta_venda and preco_atual >= alerta_venda * 0.95:
-            return f"⚡ PERTO VENDA! R$ {alerta_venda:.2f}"
-        
-        return None
-
-    def formatar_mensagem(self, dados: List[Dict]) -> str:
-        """Formata mensagem bonita para Telegram"""
-        if not dados:
-            return "❌ Nenhum dado encontrado"
-        
-        mensagem = f"📊 **BOLSA AGORA**\n"
-        mensagem += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
-        
-        alertas_ativos = []
-        
-        for acao in dados:
-            emoji = "🟢" if acao['variacao'] > 0 else "🔴" if acao['variacao'] < 0 else "⚪"
-            
-            mensagem += f"{emoji} **{acao['nome']}**\n"
-            mensagem += f"💰 R$ {acao['preco']:.2f} "
-            mensagem += f"({acao['variacao']:+.2f}%)\n"
-            
-            if acao['alerta']:
-                mensagem += f"🚨 {acao['alerta']}\n"
-                alertas_ativos.append(acao['alerta'])
-            
-            mensagem += "\n"
-        
-        # Resumo de alertas
-        if alertas_ativos:
-            mensagem += "---\n"
-            mensagem += f"🚨 **ALERTAS ATIVOS:** {len(alertas_ativos)}\n"
-        
-        mensagem += "📈 Atualizado automaticamente"
-        
-        return mensagem
-
-    def enviar_telegram(self, mensagem: str) -> bool:
-        """Envia mensagem para Telegram"""
+    for nome, serie_id in SERIES_FRED.items():
         try:
-            url = f"https://api.telegram.org/bot{self.telegram_token}/sendMessage"
-            payload = {
-                "chat_id": self.telegram_chat_id,
-                "text": mensagem,
-                "parse_mode": "Markdown"
+            print(f"🔍 Buscando {nome}...")
+            
+            params = {
+                'series_id': serie_id,
+                'api_key': FRED_API_KEY,
+                'file_type': 'json',
+                'sort_order': 'desc',
+                'limit': 1
             }
             
-            response = requests.post(url, json=payload, timeout=10)
-            return response.status_code == 200
+            response = requests.get(base_url, params=params, timeout=15)
             
+            if response.status_code == 200:
+                data = response.json()
+                observations = data.get('observations', [])
+                
+                if observations:
+                    ultimo_valor = observations[0].get('value')
+                    data_obs = observations[0].get('date')
+                    
+                    if ultimo_valor and ultimo_valor != '.':
+                        resultados.append({
+                            'nome': nome,
+                            'valor': float(ultimo_valor),
+                            'data': data_obs,
+                            'serie': serie_id
+                        })
+                        print(f"   ✅ {nome}: {ultimo_valor}")
+                    else:
+                        print(f"   ⚠️  {nome}: Sem dados recentes")
+                else:
+                    print(f"   ❌ {nome}: Nenhum dado encontrado")
+            else:
+                print(f"   ❌ {nome}: Erro API {response.status_code}")
+                
         except Exception as e:
-            print(f"❌ Erro Telegram: {e}")
-            return False
+            print(f"   💥 Erro em {nome}: {e}")
+    
+    return resultados
 
-    def executar(self):
-        """Executa o bot completo"""
-        print("🚀 Iniciando bot de alertas...")
-        
-        if not self.telegram_token or not self.telegram_chat_id:
-            print("❌ Token ou Chat ID não configurados!")
-            return
-        
-        print("📈 Buscando cotações...")
-        dados = self.buscar_cotacoes()
-        
-        print("📝 Formatando mensagem...")
-        mensagem = self.formatar_mensagem(dados)
-        
-        print("📤 Enviando para Telegram...")
-        sucesso = self.enviar_telegram(mensagem)
-        
-        if sucesso:
-            print("✅ Mensagem enviada com sucesso!")
+def formatar_mensagem(dados_fred):
+    """Formata mensagem para Telegram"""
+    if not dados_fred:
+        return "❌ Nenhum dado econômico encontrado hoje"
+    
+    mensagem = "📊 **DADOS ECONÔMICOS - FRED**\n"
+    mensagem += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+    
+    for item in dados_fred:
+        if item['nome'] == 'Dólar':
+            mensagem += f"💵 **Dólar**: R$ {item['valor']:.2f}\n"
+        elif item['nome'] == 'Bitcoin':
+            mensagem += f"₿ **Bitcoin**: US$ {item['valor']:,.0f}\n"
+        elif item['nome'] == 'Selic':
+            mensagem += f"🏦 **Selic**: {item['valor']:.2f}%\n"
+        elif item['nome'] == 'IPCA':
+            mensagem += f"📈 **IPCA**: {item['valor']:.2f}%\n"
         else:
-            print("❌ Falha ao enviar mensagem")
+            mensagem += f"📊 **{item['nome']}**: {item['valor']}\n"
+    
+    mensagem += f"\n🔗 Fonte: Federal Reserve Bank of St. Louis"
+    return mensagem
+
+def enviar_telegram(mensagem):
+    """Envia mensagem para Telegram"""
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": CHAT_ID,
+            "text": mensagem,
+            "parse_mode": "Markdown"
+        }
+        
+        response = requests.post(url, json=payload, timeout=10)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"❌ Erro Telegram: {e}")
+        return False
 
 def main():
-    """Função principal"""
-    bot = BotBolsa()
-    bot.executar()
+    print("🚀 Iniciando bot FRED...")
+    
+    if not FRED_API_KEY:
+        print("❌ FRED_API_KEY não configurada!")
+        return
+    
+    if not BOT_TOKEN or not CHAT_ID:
+        print("❌ Telegram não configurado!")
+        return
+    
+    # Busca dados
+    print("📈 Buscando dados FRED...")
+    dados_fred = buscar_dados_fred()
+    
+    print(f"✅ {len(dados_fred)} indicadores encontrados")
+    
+    # Formata e envia
+    mensagem = formatar_mensagem(dados_fred)
+    
+    print("📤 Enviando para Telegram...")
+    sucesso = enviar_telegram(mensagem)
+    
+    if sucesso:
+        print("✅ Mensagem enviada com sucesso!")
+    else:
+        print("❌ Falha ao enviar mensagem")
 
 if __name__ == "__main__":
     main()
