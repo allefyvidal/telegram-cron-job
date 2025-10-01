@@ -5,72 +5,45 @@
   },
   "acoes": [
     {
-      "ticker": "PETR4",
-      "nome": "Petrobras PN",
-      "preco_alvo_max": 42.00,
-      "preco_alvo_min": 38.00,
-      "descricao": "Petróleo e gás"
+      "ticker": "PETR4.SA",
+      "nome": "Petrobras",
+      "alerta_compra": 38.00,
+      "alerta_venda": 42.00
     },
     {
-      "ticker": "VALE3",
-      "nome": "Vale ON",
-      "preco_alvo_max": 65.00,
-      "preco_alvo_min": 60.00,
-      "descricao": "Mineração"
+      "ticker": "VALE3.SA", 
+      "nome": "Vale",
+      "alerta_compra": 60.00,
+      "alerta_venda": 65.00
     },
     {
-      "ticker": "ITUB4",
-      "nome": "Itaú PN",
-      "preco_alvo_max": 32.00,
-      "preco_alvo_min": 28.00,
-      "descricao": "Banco"
+      "ticker": "ITUB4.SA",
+      "nome": "Itaú",
+      "alerta_compra": 28.00,
+      "alerta_venda": 32.00
     },
     {
-      "ticker": "BBDC4",
-      "nome": "Bradesco PN",
-      "preco_alvo_max": 15.00,
-      "preco_alvo_min": 13.00,
-      "descricao": "Banco"
+      "ticker": "BBDC4.SA",
+      "nome": "Bradesco", 
+      "alerta_compra": 13.00,
+      "alerta_venda": 15.00
     },
     {
-      "ticker": "MGLU3",
-      "nome": "Magazine Luiza ON",
-      "preco_alvo_max": 12.00,
-      "preco_alvo_min": 8.00,
-      "descricao": "Varejo"
+      "ticker": "COGN3.SA",
+      "nome": "Cogna",
+      "alerta_compra": 2.50,
+      "alerta_venda": 4.00
     },
     {
-      "ticker": "WEGE3",
-      "nome": "WEG ON",
-      "preco_alvo_max": 55.00,
-      "preco_alvo_min": 48.00,
-      "descricao": "Equipamentos elétricos"
-    },
-    {
-      "ticker": "BBAS3",
-      "nome": "Banco do Brasil ON",
-      "preco_alvo_max": 30.00,
-      "preco_alvo_min": 26.00,
-      "descricao": "Banco"
-    },
-    {
-      "ticker": "SUZB3",
-      "nome": "Suzano ON",
-      "preco_alvo_max": 65.00,
-      "preco_alvo_min": 58.00,
-      "descricao": "Papel e celulose"
+      "ticker": "IRBR3.SA",
+      "nome": "IRB Brasil",
+      "alerta_compra": 1.50, 
+      "alerta_venda": 3.00
     }
   ],
-  "alertas": {
-    "horario_inicio": "09:00",
-    "horario_fim": "18:00",
-    "dias_semana": [0, 1, 2, 3, 4],
-    "comentarios": "0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta"
-  },
-  "configuracoes_avancadas": {
-    "timeout_api": 10,
-    "retry_attempts": 3,
-    "log_level": "INFO",
-    "formato_mensagem": "HTML"
+  "config": {
+    "intervalo_minutos": 15,
+    "horario_mercado": true,
+    "timeout": 10
   }
 }
