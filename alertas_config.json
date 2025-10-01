@@ -1,46 +1,76 @@
 {
-  "alertas": [
+  "telegram": {
+    "bot_token": "${TELEGRAM_BOT_TOKEN}",
+    "chat_id": "${TELEGRAM_CHAT_ID}"
+  },
+  "acoes": [
     {
-      "ativo": "BHIA3.SA",
-      "nome": "Casas Bahia",
-      "alerta_compra": 5.00,
-      "alerta_venda": 8.00
+      "ticker": "PETR4",
+      "nome": "Petrobras PN",
+      "preco_alvo_max": 42.00,
+      "preco_alvo_min": 38.00,
+      "descricao": "Petróleo e gás"
     },
     {
-      "ativo": "PCAR3.SA", 
-      "nome": "Grupo Pão de Açúcar",
-      "alerta_compra": 3.50,
-      "alerta_venda": 6.00
+      "ticker": "VALE3",
+      "nome": "Vale ON",
+      "preco_alvo_max": 65.00,
+      "preco_alvo_min": 60.00,
+      "descricao": "Mineração"
     },
     {
-      "ativo": "COGN3.SA",
-      "nome": "Cogna Educação",
-      "alerta_compra": 2.50,
-      "alerta_venda": 4.00
+      "ticker": "ITUB4",
+      "nome": "Itaú PN",
+      "preco_alvo_max": 32.00,
+      "preco_alvo_min": 28.00,
+      "descricao": "Banco"
     },
     {
-      "ativo": "IRBR3.SA",
-      "nome": "IRB Brasil RE",
-      "alerta_compra": 1.50,
-      "alerta_venda": 3.00
+      "ticker": "BBDC4",
+      "nome": "Bradesco PN",
+      "preco_alvo_max": 15.00,
+      "preco_alvo_min": 13.00,
+      "descricao": "Banco"
     },
     {
-      "ativo": "PETR4.SA",
-      "nome": "Petrobras",
-      "alerta_compra": 35.00,
-      "alerta_venda": 45.00
+      "ticker": "MGLU3",
+      "nome": "Magazine Luiza ON",
+      "preco_alvo_max": 12.00,
+      "preco_alvo_min": 8.00,
+      "descricao": "Varejo"
     },
     {
-      "ativo": "BTC-USD",
-      "nome": "Bitcoin", 
-      "alerta_compra": 40000,
-      "alerta_venda": 70000
+      "ticker": "WEGE3",
+      "nome": "WEG ON",
+      "preco_alvo_max": 55.00,
+      "preco_alvo_min": 48.00,
+      "descricao": "Equipamentos elétricos"
     },
     {
-      "ativo": "BRL=X",
-      "nome": "Dólar",
-      "alerta_compra": 4.80,
-      "alerta_venda": 5.50
+      "ticker": "BBAS3",
+      "nome": "Banco do Brasil ON",
+      "preco_alvo_max": 30.00,
+      "preco_alvo_min": 26.00,
+      "descricao": "Banco"
+    },
+    {
+      "ticker": "SUZB3",
+      "nome": "Suzano ON",
+      "preco_alvo_max": 65.00,
+      "preco_alvo_min": 58.00,
+      "descricao": "Papel e celulose"
     }
-  ]
+  ],
+  "alertas": {
+    "horario_inicio": "09:00",
+    "horario_fim": "18:00",
+    "dias_semana": [0, 1, 2, 3, 4],
+    "comentarios": "0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta"
+  },
+  "configuracoes_avancadas": {
+    "timeout_api": 10,
+    "retry_attempts": 3,
+    "log_level": "INFO",
+    "formato_mensagem": "HTML"
+  }
 }
