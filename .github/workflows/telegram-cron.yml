@@ -1,12 +1,12 @@
-name: 📈 Bot Bolsa 5min
+name: 🤖 Bot Bolsa 5min
 
 on:
   schedule:
-    - cron: '*/10 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
+    - cron: '*/5 12-21 * * 1-5'  # A cada 5min, Seg-Sex, 9h-18h BRT
   workflow_dispatch:
 
 jobs:
-  bolsa-5min:
+  executar-bot:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,8 +21,8 @@ jobs:
       - name: 📦 Instalar dependências
         run: pip install yfinance requests
         
-      - name: 🔍 Executar bot da bolsa
+      - name: 🔍 Executar bot
         env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python bot_alertas.py
