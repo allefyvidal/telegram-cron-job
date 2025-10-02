@@ -5,7 +5,7 @@
 import requests
 import os
 
-class FredExplorer:
+class FredExplorer:  # ← ESTA é a única declaração da classe
     def __init__(self):
         self.api_key = os.getenv('FRED_API_KEY')  # Direto da environment variable
         self.base_url = "https://api.stlouisfed.org/fred"
