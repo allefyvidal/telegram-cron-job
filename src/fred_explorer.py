@@ -1,29 +1,29 @@
 """
-🔍 EXPLORADOR FRED - Versão Simplificada
+🔍 EXPLORADOR FRED - Busca Séries Brasileiras Relevantes
 """
 
 import requests
 import os
 
-class FredExplorer:  # ← ESTA é a única declaração da classe
+class FredExplorer:
     def __init__(self):
-        self.api_key = os.getenv('FRED_API_KEY')  # Direto da environment variable
+        self.api_key = os.getenv('FRED_API_KEY')
         self.base_url = "https://api.stlouisfed.org/fred"
     
-    def buscar_series_brasil(self):
-        """Busca especificamente séries brasileiras"""
-        print("🇧🇷 Buscando séries do Brasil...")
+    def buscar_series_por_palavra_chave(self, keyword: str):
+        """Busca séries por palavra-chave"""
+        print(f"🔍 Buscando séries com: '{keyword}'...")
         
         if not self.api_key:
             print("❌ FRED_API_KEY não configurada!")
             return []
         
-        endpoint = "category/series"
+        endpoint = "series/search"
         params = {
             'api_key': self.api_key,
             'file_type': 'json',
-            'category_id': 32351,  # Categoria Brasil
-            'limit': 20
+            'search_text': keyword,
+            'limit': 10
         }
         
         try:
@@ -33,17 +33,27 @@ class FredExplorer:  # ← ESTA é a única declaração da classe
                 data = response.json()
                 series = data.get('seriess', [])
                 
-                print(f"✅ {len(series)} séries brasileiras encontradas:")
+                print(f"✅ {len(series)} séries encontradas para '{keyword}':")
                 print("=" * 60)
                 
+                series_filtradas = []
                 for serie in series:
-                    print(f"📊 {serie['id']}")
-                    print(f"   📝 {serie['title']}")
-                    print(f"   🕐 {serie.get('frequency', 'N/A')}")
-                    print(f"   📏 {serie.get('units', 'N/A')}")
-                    print()
+                    # Filtra só séries relevantes (não descontinuadas)
+                    if not serie.get('title', '').upper().startswith('DISCONTINUED'):
+                        info = {
+                            'id': serie['id'],
+                            'title': serie['title'],
+                            'frequency': serie.get('frequency', 'N/A'),
+                            'units': serie.get('units', 'N/A')
+                        }
+                        series_filtradas.append(info)
+                        
+                        print(f"📊 {serie['id']}")
+                        print(f"   📝 {serie['title']}")
+                        print(f"   🕐 {serie.get('frequency', 'N/A')} | 📏 {serie.get('units', 'N/A')}")
+                        print()
                 
-                return series
+                return series_filtradas
             else:
                 print(f"❌ Erro API: {response.status_code}")
                 return []
@@ -51,11 +61,47 @@ class FredExplorer:  # ← ESTA é a única declaração da classe
         except Exception as e:
             print(f"💥 Erro: {e}")
             return []
+    
+    def explorar_series_brasileiras(self):
+        """Busca séries brasileiras relevantes"""
+        print("🇧🇷 EXPLORANDO SÉRIES BRASILEIRAS RELEVANTES...")
+        
+        keywords = [
+            "Brazil exchange rate",
+            "Brazil interest rate", 
+            "Brazil inflation",
+            "Brazil GDP",
+            "Brazil unemployment",
+            "Brazil industrial production",
+            "Brazil consumer price",
+            "Bovespa",
+            "Brazil currency",
+            "Brazil central bank"
+        ]
+        
+        todas_series = []
+        
+        for keyword in keywords:
+            series = self.buscar_series_por_palavra_chave(keyword)
+            todas_series.extend(series)
+            print()  # Linha em branco entre buscas
+        
+        # Remove duplicatas
+        series_unicas = []
+        ids_vistos = set()
+        
+        for serie in todas_series:
+            if serie['id'] not in ids_vistos:
+                series_unicas.append(serie)
+                ids_vistos.add(serie['id'])
+        
+        print(f"🎯 TOTAL DE {len(series_unicas)} SÉRIES BRASILEIRAS ÚNICAS ENCONTRADAS!")
+        return series_unicas
 
 def main():
-    print("🚀 EXPLORADOR FRED - INICIANDO...")
+    print("🚀 EXPLORADOR FRED AVANÇADO - INICIANDO...")
     explorer = FredExplorer()
-    explorer.buscar_series_brasil()
+    explorer.explorar_series_brasileiras()
     print("🎯 EXPLORAÇÃO CONCLUÍDA!")
 
 if __name__ == "__main__":
