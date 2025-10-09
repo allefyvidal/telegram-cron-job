@@ -1,58 +1,75 @@
 """
-🤖 BOT PRINCIPAL - Versão Modular
+🤖 BOT CRIPTO - Versão Simplificada
 """
 
 import os
-import sys
+import yfinance as yf
+from datetime import datetime
+from telegram_client import TelegramClient
 
-# Adiciona o src ao path para importações
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from src.config import API_KEYS, BOT_CONFIG
-from src.fred_client import FredClient
-from src.telegram_client import TelegramClient
-from src.message_formatter import MessageFormatter
-
-class BotEconomico:
+class BotCripto:
     def __init__(self):
-        self.fred_client = FredClient()
         self.telegram_client = TelegramClient()
-        self.formatter = MessageFormatter()
+        self.criptos = {
+            "Bitcoin": "BTC-USD",
+            "Ethereum": "ETH-USD", 
+            "Solana": "SOL-USD",
+            "Cardano": "ADA-USD",
+        }
     
-    def coletar_dados(self):
-        """Coleta dados de todas as APIs"""
-        print("📈 Coletando dados...")
+    def buscar_criptos(self):
+        """Busca cotações das criptomoedas"""
+        print("🪙 Buscando criptomoedas...")
         
-        todos_dados = []
+        dados = []
+        for nome, ticker in self.criptos.items():
+            try:
+                crypto = yf.Ticker(ticker)
+                historico = crypto.history(period='2d')
+                
+                if len(historico) >= 2:
+                    preco_atual = historico['Close'].iloc[-1]
+                    preco_anterior = historico['Close'].iloc[-2]
+                    variacao = ((preco_atual - preco_anterior) / preco_anterior) * 100
+                    
+                    dados.append({
+                        'nome': nome,
+                        'preco': preco_atual,
+                        'variacao': variacao
+                    })
+                    print(f"✅ {nome}: US$ {preco_atual:.2f} ({variacao:+.2f}%)")
+                    
+            except Exception as e:
+                print(f"❌ Erro em {nome}: {e}")
         
-        # Dados do FRED
-        dados_fred = self.fred_client.buscar_todos_dados()
-        todos_dados.extend(dados_fred)
+        return dados
+    
+    def formatar_mensagem(self, dados):
+        """Formata mensagem para Telegram"""
+        if not dados:
+            return "❌ Nenhuma criptomoeda encontrada"
         
-        # Futuro: Adicionar outras APIs aqui
-        # dados_alpha = self.alpha_client.buscar_dados()
-        # todos_dados.extend(dados_alpha)
+        mensagem = "🪙 **CRIPTOMOEDAS**\n"
+        mensagem += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
         
-        print(f"✅ {len(todos_dados)} indicadores coletados")
-        return todos_dados
+        for crypto in dados:
+            emoji = "🟢" if crypto['variacao'] > 0 else "🔴" if crypto['variacao'] < 0 else "⚪"
+            mensagem += f"{emoji} **{crypto['nome']}**: US$ {crypto['preco']:,.2f} "
+            mensagem += f"({crypto['variacao']:+.2f}%)\n"
+        
+        mensagem += f"\n💰 {len(dados)} criptos monitoradas"
+        return mensagem
     
     def executar(self):
         """Executa o bot completo"""
-        print("🚀 Iniciando Bot Econômico...")
+        print("🚀 Iniciando Bot Cripto...")
         
-        # Verifica configurações
-        if not all([BOT_CONFIG['token'], BOT_CONFIG['chat_id'], API_KEYS['fred']]):
-            print("❌ Configurações incompletas!")
-            print(f"   BOT_TOKEN: {'✅' if BOT_CONFIG['token'] else '❌'}")
-            print(f"   CHAT_ID: {'✅' if BOT_CONFIG['chat_id'] else '❌'}")
-            print(f"   FRED_API_KEY: {'✅' if API_KEYS['fred'] else '❌'}")
+        if not all([self.telegram_client.token, self.telegram_client.chat_id]):
+            print("❌ Telegram não configurado!")
             return
         
-        # Coleta dados
-        dados = self.coletar_dados()
-        
-        # Formata e envia
-        mensagem = self.formatter.criar_relatorio(dados, "FRED")
+        dados = self.buscar_criptos()
+        mensagem = self.formatar_mensagem(dados)
         
         print("📤 Enviando para Telegram...")
         sucesso = self.telegram_client.enviar_mensagem(mensagem)
@@ -62,6 +79,9 @@ class BotEconomico:
         else:
             print("❌ Falha ao enviar mensagem")
 
-if __name__ == "__main__":
-    bot = BotEconomico()
+def main():
+    bot = BotCripto()
     bot.executar()
+
+if __name__ == "__main__":
+    main()
