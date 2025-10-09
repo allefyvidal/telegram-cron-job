@@ -3,7 +3,7 @@
 """
 
 import requests
-from src.config import BOT_CONFIG
+from config import BOT_CONFIG
 
 class TelegramClient:
     def __init__(self):
