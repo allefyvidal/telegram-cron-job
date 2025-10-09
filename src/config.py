@@ -1,6 +1,7 @@
 """
 💎💎💎💎💎 CRIPTO 💎💎💎💎💎💎💎
 """
+
 import os
 
 # Telegram
@@ -12,17 +13,17 @@ BOT_CONFIG = {
 # Criptomoedas com preços-alvo específicos EM REAIS
 CRIPTO_ALERTAS = {
     "Arbitrum": {
-        "simbolo": "ARB-BRL",  # Mudei para BRL direto!
+        "simbolo": "ARB-USD",  # VOLTEI para USD mas convertemos!
         "preco_alvo": 2.40,    # EM REAIS
         "emoji": "🔵"
     },
     "Cosmos": {
-        "simbolo": "ATOM-BRL",  # Mudei para BRL direto!
+        "simbolo": "ATOM-USD", # VOLTEI para USD mas convertemos!
         "preco_alvo": 24.86,   # EM REAIS
         "emoji": "⚛️"
     },
     "Cardano": {
-        "simbolo": "ADA-BRL",   # Mudei para BRL direto!
+        "simbolo": "ADA-USD",  # VOLTEI para USD mas convertemos!
         "preco_alvo": 4.70,    # EM REAIS
         "emoji": "🔷"
     }
@@ -32,4 +33,5 @@ CRIPTO_ALERTAS = {
 SETTINGS = {
     'timeout': 15,
     'check_interval': 60,
+    'dolar_para_real': 5.37,  # Taxa fixa que funcionou
 }
