@@ -1,7 +1,7 @@
-name: 🤖 Mão invisível do mercado
+name: 🤖 Alertas Cripto - ARB, ATOM, ADA
 on:
   schedule:
-    - cron: '0 9,12,15,17 * * 1-5'  # 9h, 12h, 15h, 17h BRT
+    - cron: '*/30 9-23 * * *'  # A cada 30 minutos, das 9h às 23h
   workflow_dispatch:
 
 jobs:
@@ -18,9 +18,9 @@ jobs:
           python-version: '3.9'
           
       - name: 📦 Instalar dependências
-        run: pip install -r requirements.txt  # ⚠️ VERIFIQUE SE TEM ESTA LINHA!
+        run: pip install -r requirements.txt
         
-      - name: 🔍 Executar bot
+      - name: 🔍 Executar alertas cripto
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.CHAT_ID }}
