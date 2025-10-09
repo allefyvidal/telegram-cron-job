@@ -1,5 +1,5 @@
 """
-🤖 BOT CRIPTO - Alertas de Preço para Mitigar Perdas
+🤖 BOT CRIPTO - Alertas de Preço para ARB, ATOM, ADA
 """
 
 import os
@@ -12,12 +12,12 @@ import time
 sys.path.append(os.path.dirname(__file__))
 
 from telegram_client import TelegramClient
-from config import CRIPTO_MONITORAR, SETTINGS
+from config import CRIPTO_ALERTAS, SETTINGS
 
-class CriptoMonitor:
+class CriptoAlertas:
     def __init__(self):
         self.telegram = TelegramClient()
-        self.ultimos_precos = {}
+        self.alertas_enviados = set()  # Para evitar alertas duplicados
     
     def obter_preco_cripto(self, simbolo: str) -> float:
         """Obtém preço atual da criptomoeda"""
@@ -34,81 +34,103 @@ class CriptoMonitor:
             print(f"❌ Erro ao buscar {simbolo}: {e}")
             return 0.0
     
-    def calcular_variacao(self, simbolo: str, preco_atual: float) -> float:
-        """Calcula variação percentual em relação ao último preço"""
-        if simbolo in self.ultimos_precos:
-            preco_anterior = self.ultimos_precos[simbolo]
-            if preco_anterior > 0:
-                variacao = ((preco_atual - preco_anterior) / preco_anterior) * 100
-                return round(variacao, 2)
-        return 0.0
-    
-    def monitorar_criptos(self):
-        """Monitora todas as criptomoedas configuradas"""
-        print(f"🔍 Monitorando {len(CRIPTO_MONITORAR)} criptomoedas...")
+    def verificar_alertas(self):
+        """Verifica se algum preço atingiu o alvo"""
+        print(f"🔍 Verificando alertas para {len(CRIPTO_ALERTAS)} criptomoedas...")
         
-        mensagem = "📊 **RELATÓRIO CRIPTO - PREÇOS ATUAIS**\n"
-        mensagem += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+        alertas_ativos = []
+        relatorio = "📊 **RELATÓRIO CRIPTO - ALERTAS**\n"
+        relatorio += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
         
-        alertas = []
-        
-        for nome, simbolo in CRIPTO_MONITORAR.items():
+        for nome, info in CRIPTO_ALERTAS.items():
+            simbolo = info["simbolo"]
+            preco_alvo = info["preco_alvo"]
+            emoji = info["emoji"]
+            
             preco_atual = self.obter_preco_cripto(simbolo)
             
             if preco_atual > 0:
-                # Calcula variação
-                variacao = self.calcular_variacao(simbolo, preco_atual)
-                self.ultimos_precos[simbolo] = preco_atual
+                # Status atual
+                status = "✅ ABAIXO" if preco_atual < preco_alvo else "🚨 ATINGIDO"
+                variacao = ((preco_atual - preco_alvo) / preco_alvo) * 100
                 
-                # Formata mensagem
-                emoji = "🟢" if variacao >= 0 else "🔴"
-                mensagem += f"{emoji} **{nome}**: ${preco_atual:,.2f} "
-                mensagem += f"({variacao:+.2f}%)\n"
+                relatorio += f"{emoji} **{nome}**: ${preco_atual:,.2f}\n"
+                relatorio += f"   🎯 Alvo: ${preco_alvo:,.2f}\n"
+                relatorio += f"   📊 Status: {status}\n"
+                relatorio += f"   📈 Variação: {variacao:+.2f}%\n\n"
                 
-                # Verifica se há alerta (aqui vamos integrar com Google Sheets depois)
-                if variacao > SETTINGS['variacao_alerta']:
-                    alertas.append(f"🚨 {nome} subiu {variacao}% - ${preco_atual:,.2f}")
-            
+                # Verifica se atingiu o alvo
+                if preco_atual >= preco_alvo:
+                    chave_alerta = f"{nome}_{preco_alvo}"
+                    if chave_alerta not in self.alertas_enviados:
+                        alerta_msg = (
+                            f"🚨 **ALERTA ATINGIDO!** 🚨\n\n"
+                            f"{emoji} **{nome}** atingiu ${preco_atual:,.2f}\n"
+                            f"🎯 **Preço alvo**: ${preco_alvo:,.2f}\n"
+                            f"📈 **Variação**: {variacao:+.2f}%\n\n"
+                            f"💡 _Hora de considerar realizar lucros!_"
+                        )
+                        alertas_ativos.append(alerta_msg)
+                        self.alertas_enviados.add(chave_alerta)
+                
             else:
-                mensagem += f"❌ **{nome}**: Erro ao buscar preço\n"
+                relatorio += f"❌ **{nome}**: Erro ao buscar preço\n\n"
             
             # Delay para não sobrecarregar a API
             time.sleep(1)
         
-        # Adiciona alertas se houver
-        if alertas:
-            mensagem += "\n🔔 **ALERTAS ATIVOS:**\n"
-            for alerta in alertas:
-                mensagem += f"• {alerta}\n"
+        # Envia alertas individuais (mais visíveis)
+        for alerta in alertas_ativos:
+            print(f"📤 Enviando alerta para {alerta.split()[3]}...")  # Pega o nome da cripto
+            self.telegram.enviar_mensagem(alerta)
+            time.sleep(2)  # Delay entre alertas
+        
+        # Envia relatório completo
+        if alertas_ativos:
+            relatorio += f"🔔 **{len(alertas_ativos)} ALERTA(S) ATIVADO(S)!**\n"
         else:
-            mensagem += "\n✅ Nenhum alerta disparado no momento\n"
+            relatorio += "✅ **Nenhum alerta atingido no momento**\n"
         
-        mensagem += f"\n💡 Monitorando {len(CRIPTO_MONITORAR)} criptomoedas"
+        relatorio += f"\n🎯 Monitorando {len(CRIPTO_ALERTAS)} alvos de preço"
         
-        return mensagem
+        # Envia relatório
+        sucesso = self.telegram.enviar_mensagem(relatorio)
+        
+        if sucesso:
+            print("✅ Relatório enviado com sucesso!")
+        else:
+            print("❌ Falha ao enviar relatório")
+        
+        return len(alertas_ativos)
     
-    def executar_monitoramento(self):
-        """Executa o monitoramento completo"""
+    def executar_monitoramento_continuo(self):
+        """Executa monitoramento contínuo (para teste local)"""
+        print("🚀 Iniciando monitoramento contínuo de criptomoedas...")
+        print("⏰ Verificando a cada 60 segundos")
+        print("🛑 Pressione Ctrl+C para parar\n")
+        
         try:
-            print("🚀 Iniciando monitoramento de criptomoedas...")
-            
-            mensagem = self.monitorar_criptos()
-            
-            # Envia para Telegram
-            sucesso = self.telegram.enviar_mensagem(mensagem)
-            
-            if sucesso:
-                print("✅ Relatório enviado com sucesso!")
-            else:
-                print("❌ Falha ao enviar relatório")
+            while True:
+                alertas = self.verificar_alertas()
+                if alertas > 0:
+                    print(f"🚨 {alertas} alerta(s) enviado(s)!")
                 
-        except Exception as e:
-            print(f"💥 Erro no monitoramento: {e}")
+                print(f"⏳ Próxima verificação em {SETTINGS['check_interval']} segundos...\n")
+                time.sleep(SETTINGS['check_interval'])
+                
+        except KeyboardInterrupt:
+            print("\n🛑 Monitoramento interrompido pelo usuário")
 
 def main():
     """Função principal"""
-    monitor = CriptoMonitor()
-    monitor.executar_monitoramento()
+    monitor = CriptoAlertas()
+    
+    # Para GitHub Actions - executa uma vez
+    if os.getenv('GITHUB_ACTIONS'):
+        monitor.verificar_alertas()
+    else:
+        # Para teste local - executa continuamente
+        monitor.executar_monitoramento_continuo()
 
 if __name__ == "__main__":
     main()
