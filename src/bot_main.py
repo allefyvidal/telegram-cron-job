@@ -1,16 +1,14 @@
 """
-🤖 BOT CRIPTO - Alertas de Preço em REAIS - ARB CORRIGIDO!
+🤖 BOT CRIPTO - CoinGecko API (FUNCIONA!)
 """
 
 import os
 import sys
-import yfinance as yf
+import requests
 from datetime import datetime
 import time
 import pytz
-import requests
 
-# Adiciona o diretório atual ao path para imports
 sys.path.append(os.path.dirname(__file__))
 
 from telegram_client import TelegramClient
@@ -21,73 +19,36 @@ class CriptoAlertas:
         self.telegram = TelegramClient()
         self.alertas_enviados = set()
         self.fuso_brasil = pytz.timezone('America/Sao_Paulo')
+        self.coingecko_url = "https://api.coingecko.com/api/v3/simple/price"
     
-    def obter_taxa_dolar_real(self) -> float:
-        """Obtém a taxa atual do dólar para real"""
+    def obter_preco_coingecko(self, coin_id: str) -> float:
+        """Obtém preço em REAIS direto da CoinGecko"""
         try:
-            ticker = yf.Ticker("USDBRL=X")
-            info = ticker.history(period="1d", interval="1m")
+            print(f"🔍 Buscando {coin_id}...")
             
-            if not info.empty:
-                taxa = info['Close'].iloc[-1]
-                print(f"💵 Taxa USD/BRL: R$ {taxa:.2f}")
-                return round(float(taxa), 2)
-            else:
-                print("⚠️  Usando taxa fixa USD/BRL: 5.38")
-                return SETTINGS['dolar_para_real']
-                
-        except Exception as e:
-            print(f"❌ Erro ao buscar taxa dólar: {e}")
-            print("⚠️  Usando taxa fixa USD/BRL: 5.38")
-            return SETTINGS['dolar_para_real']
-    
-    def obter_preco_arbitrum_binance(self) -> float:
-        """Obtém preço do Arbitrum direto da Binance API"""
-        try:
-            print("🔍 Buscando ARB na Binance...")
-            url = "https://api.binance.com/api/v3/ticker/price"
-            params = {"symbol": "ARBUSDT"}  # ARB/USDT na Binance
+            params = {
+                'ids': coin_id,
+                'vs_currencies': 'brl',
+                'include_last_updated_at': 'true'
+            }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(self.coingecko_url, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                preco_usd = float(data['price'])
-                print(f"✅ ARB Binance: ${preco_usd:.4f}")
-                return preco_usd
+                if coin_id in data:
+                    preco_brl = data[coin_id]['brl']
+                    print(f"✅ {coin_id}: R$ {preco_brl:.3f}")
+                    return round(float(preco_brl), 3)
+                else:
+                    print(f"❌ {coin_id} não encontrado")
+                    return 0.0
             else:
-                print(f"❌ Erro Binance API: {response.status_code}")
+                print(f"❌ Erro API: {response.status_code}")
                 return 0.0
                 
         except Exception as e:
-            print(f"❌ Erro ao buscar ARB: {e}")
-            return 0.0
-    
-    def obter_preco_cripto_brl(self, simbolo: str, corretor: str = "yfinance") -> float:
-        """Obtém preço atual da criptomoeda em REAIS"""
-        try:
-            if corretor == "binance":
-                # Para Arbitrum - usa Binance
-                preco_usd = self.obter_preco_arbitrum_binance()
-            else:
-                # Para outras - usa Yahoo Finance
-                ticker = yf.Ticker(simbolo)
-                info = ticker.history(period="1d", interval="1m")
-                
-                if not info.empty:
-                    preco_usd = info['Close'].iloc[-1]
-                else:
-                    return 0.0
-            
-            if preco_usd > 0:
-                # Converte para BRL
-                taxa_cambio = self.obter_taxa_dolar_real()
-                preco_brl = preco_usd * taxa_cambio
-                return round(float(preco_brl), 3)
-            return 0.0
-            
-        except Exception as e:
-            print(f"❌ Erro ao buscar {simbolo}: {e}")
+            print(f"❌ Erro ao buscar {coin_id}: {e}")
             return 0.0
     
     def obter_hora_brasil(self):
@@ -97,22 +58,19 @@ class CriptoAlertas:
     
     def verificar_alertas(self):
         """Verifica se algum preço atingiu o alvo EM REAIS"""
-        print(f"🔍 Verificando alertas para {len(CRIPTO_ALERTAS)} criptomoedas...")
-        
-        taxa_cambio = self.obter_taxa_dolar_real()
+        print(f"🔍 Verificando {len(CRIPTO_ALERTAS)} criptomoedas via CoinGecko...")
         
         alertas_ativos = []
         relatorio = "📊 **RELATÓRIO CRIPTO - PREÇOS EM REAIS** 🇧🇷\n"
         relatorio += f"🕐 {self.obter_hora_brasil()} (BRT)\n"
-        relatorio += f"💵 Taxa USD/BRL: R$ {taxa_cambio:.2f}\n\n"
+        relatorio += f"🔗 Fonte: CoinGecko\n\n"
         
         for nome, info in CRIPTO_ALERTAS.items():
-            simbolo = info["simbolo"]
+            coin_id = info["id"]
             preco_alvo_brl = info["preco_alvo"]
             emoji = info["emoji"]
-            corretor = info.get("corretor", "yfinance")
             
-            preco_atual_brl = self.obter_preco_cripto_brl(simbolo, corretor)
+            preco_atual_brl = self.obter_preco_coingecko(coin_id)
             
             if preco_atual_brl > 0:
                 # Status atual
@@ -135,7 +93,7 @@ class CriptoAlertas:
                     chave_alerta = f"{nome}_{preco_alvo_brl}"
                     if chave_alerta not in self.alertas_enviados:
                         alerta_msg = (
-                            f"🎯 **ALERTA ATINGIDO!** 🎯\n\n"
+                            f"🎯 **ALERTA ATINGIDO!** 🚨\n\n"
                             f"{emoji} **{nome}** atingiu R$ {preco_atual_brl:,.3f}\n"
                             f"💰 **Preço alvo**: R$ {preco_alvo_brl:,.2f}\n"
                             f"📈 **Variação**: {variacao:+.2f}%\n\n"
@@ -147,11 +105,11 @@ class CriptoAlertas:
             else:
                 relatorio += f"❌ **{nome}**: Erro ao buscar preço\n\n"
             
-            time.sleep(1)
+            time.sleep(1)  # Respeitar rate limit
         
         # Envia alertas
         for alerta in alertas_ativos:
-            print(f"📤 Enviando alerta...")
+            print(f"📤 Enviando alerta para Telegram...")
             self.telegram.enviar_mensagem(alerta)
             time.sleep(2)
         
@@ -167,9 +125,9 @@ class CriptoAlertas:
         sucesso = self.telegram.enviar_mensagem(relatorio)
         
         if sucesso:
-            print("✅ Relatório enviado!")
+            print("✅ Relatório enviado com sucesso!")
         else:
-            print("❌ Falha ao enviar")
+            print("❌ Falha ao enviar relatório")
         
         return len(alertas_ativos)
 
