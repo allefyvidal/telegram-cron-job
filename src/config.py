@@ -47,3 +47,17 @@ SETTINGS = {
     'timeout': 15,
     'retry_attempts': 3,
 }
+
+# Criptomoedas para monitorar
+CRIPTO_MONITORAR = {
+    "Bitcoin": "BTC-USD",
+    "Ethereum": "ETH-USD", 
+    "Solana": "SOL-USD",
+    "Cardano": "ADA-USD",
+}
+
+# Configurações de cripto
+CRIPTO_CONFIG = {
+    'alertas_24h': True,
+    'variacao_alerta': 5,  # % para disparar alerta
+}
