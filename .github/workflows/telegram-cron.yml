@@ -1,8 +1,7 @@
-name: 🤖 Bot FRED Econômico
-
+name: 🤖 Mão invisível do mercado
 on:
   schedule:
-    - cron: '0 9,12,15,17 * * 1-5'  # 9h, 12h, 15h, 17h BRT (4x/dia)
+    - cron: '0 9,12,15,17 * * 1-5'  # 9h, 12h, 15h, 17h BRT
   workflow_dispatch:
 
 jobs:
@@ -18,12 +17,11 @@ jobs:
         with:
           python-version: '3.9'
           
-      - name: 📦 Instalar requests
-        run: pip install requests
+      - name: 📦 Instalar dependências
+        run: pip install -r requirements.txt  # ⚠️ VERIFIQUE SE TEM ESTA LINHA!
         
-      - name: 🔍 Executar bot FRED
+      - name: 🔍 Executar bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.CHAT_ID }}
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python src/bot_main.py
