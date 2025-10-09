@@ -1,5 +1,5 @@
 """
-🤖 BOT CRIPTO - Versão Simplificada
+🤖 BOT CRIPTO - Alertas de Preço Personalizados
 """
 
 import os
@@ -10,18 +10,27 @@ BOT_CONFIG = {
     'chat_id': os.getenv('TELEGRAM_CHAT_ID', '')
 }
 
-# Criptomoedas para monitorar
-CRIPTO_MONITORAR = {
-    "Bitcoin": "BTC-USD",
-    "Ethereum": "ETH-USD", 
-    "Solana": "SOL-USD",
-    "Cardano": "ADA-USD",
-    "Polygon": "MATIC-USD",
-    "Binance Coin": "BNB-USD",
+# Criptomoedas com preços-alvo específicos
+CRIPTO_ALERTAS = {
+    "Arbitrum": {
+        "simbolo": "ARB-USD",
+        "preco_alvo": 2.40,
+        "emoji": "🔵"
+    },
+    "Cosmos": {
+        "simbolo": "ATOM-USD", 
+        "preco_alvo": 24.86,
+        "emoji": "⚛️"
+    },
+    "Cardano": {
+        "simbolo": "ADA-USD",
+        "preco_alvo": 4.70,
+        "emoji": "🔷"
+    }
 }
 
 # Configurações
 SETTINGS = {
     'timeout': 15,
-    'variacao_alerta': 3,  # % para alerta de variação
+    'check_interval': 60,  # Verificar a cada 60 segundos
 }
