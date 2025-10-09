@@ -1,5 +1,5 @@
 """
-🤖 BOT CRIPTO - Alertas de Preço para ARB, ATOM, ADA
+💎💎💎💎💎 CRIPTO 💎💎💎💎💎💎💎
 """
 
 import os
@@ -17,17 +17,41 @@ from config import CRIPTO_ALERTAS, SETTINGS
 class CriptoAlertas:
     def __init__(self):
         self.telegram = TelegramClient()
-        self.alertas_enviados = set()  # Para evitar alertas duplicados
+        self.alertas_enviados = set()
+        self.taxa_cambio = self.obter_taxa_dolar_real()
     
-    def obter_preco_cripto(self, simbolo: str) -> float:
-        """Obtém preço atual da criptomoeda"""
+    def obter_taxa_dolar_real(self) -> float:
+        """Obtém a taxa atual do dólar para real"""
         try:
+            # Usa o par USD-BRL do Yahoo Finance
+            ticker = yf.Ticker("USDBRL=X")
+            info = ticker.history(period="1d", interval="1m")
+            
+            if not info.empty:
+                taxa = info['Close'].iloc[-1]
+                print(f"💵 Taxa USD/BRL: R$ {taxa:.2f}")
+                return round(float(taxa), 2)
+            else:
+                print("⚠️  Usando taxa padrão USD/BRL: 5.40")
+                return SETTINGS['dolar_para_real']
+                
+        except Exception as e:
+            print(f"❌ Erro ao buscar taxa dólar: {e}")
+            print("⚠️  Usando taxa padrão USD/BRL: 5.40")
+            return SETTINGS['dolar_para_real']
+    
+    def obter_preco_cripto_brl(self, simbolo: str) -> float:
+        """Obtém preço atual da criptomoeda em REAIS"""
+        try:
+            # Obtém preço em USD
             ticker = yf.Ticker(simbolo)
             info = ticker.history(period="1d", interval="1m")
             
             if not info.empty:
-                preco_atual = info['Close'].iloc[-1]
-                return round(float(preco_atual), 4)
+                preco_usd = info['Close'].iloc[-1]
+                # Converte para BRL
+                preco_brl = preco_usd * self.taxa_cambio
+                return round(float(preco_brl), 4)
             return 0.0
             
         except Exception as e:
@@ -35,39 +59,42 @@ class CriptoAlertas:
             return 0.0
     
     def verificar_alertas(self):
-        """Verifica se algum preço atingiu o alvo"""
+        """Verifica se algum preço atingiu o alvo EM REAIS"""
         print(f"🔍 Verificando alertas para {len(CRIPTO_ALERTAS)} criptomoedas...")
+        print(f"💵 Taxa USD/BRL atual: R$ {self.taxa_cambio:.2f}")
         
         alertas_ativos = []
-        relatorio = "📊 **RELATÓRIO CRIPTO - ALERTAS**\n"
-        relatorio += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+        relatorio = "📊 **RELATÓRIO CRIPTO - PREÇOS EM REAIS**\n"
+        relatorio += f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+        relatorio += f"💵 Taxa USD/BRL: R$ {self.taxa_cambio:.2f}\n\n"
         
         for nome, info in CRIPTO_ALERTAS.items():
             simbolo = info["simbolo"]
-            preco_alvo = info["preco_alvo"]
+            preco_alvo_brl = info["preco_alvo"]  # Já está em BRL
             emoji = info["emoji"]
             
-            preco_atual = self.obter_preco_cripto(simbolo)
+            preco_atual_brl = self.obter_preco_cripto_brl(simbolo)
             
-            if preco_atual > 0:
+            if preco_atual_brl > 0:
                 # Status atual
-                status = "✅ ABAIXO" if preco_atual < preco_alvo else "🚨 ATINGIDO"
-                variacao = ((preco_atual - preco_alvo) / preco_alvo) * 100
+                status = "✅ ABAIXO" if preco_atual_brl < preco_alvo_brl else "🚨 ATINGIDO"
+                variacao = ((preco_atual_brl - preco_alvo_brl) / preco_alvo_brl) * 100
                 
-                relatorio += f"{emoji} **{nome}**: ${preco_atual:,.2f}\n"
-                relatorio += f"   🎯 Alvo: ${preco_alvo:,.2f}\n"
+                relatorio += f"{emoji} **{nome}**: R$ {preco_atual_brl:,.2f}\n"
+                relatorio += f"   🎯 Alvo: R$ {preco_alvo_brl:,.2f}\n"
                 relatorio += f"   📊 Status: {status}\n"
                 relatorio += f"   📈 Variação: {variacao:+.2f}%\n\n"
                 
                 # Verifica se atingiu o alvo
-                if preco_atual >= preco_alvo:
-                    chave_alerta = f"{nome}_{preco_alvo}"
+                if preco_atual_brl >= preco_alvo_brl:
+                    chave_alerta = f"{nome}_{preco_alvo_brl}"
                     if chave_alerta not in self.alertas_enviados:
                         alerta_msg = (
                             f"🚨 **ALERTA ATINGIDO!** 🚨\n\n"
-                            f"{emoji} **{nome}** atingiu ${preco_atual:,.2f}\n"
-                            f"🎯 **Preço alvo**: ${preco_alvo:,.2f}\n"
-                            f"📈 **Variação**: {variacao:+.2f}%\n\n"
+                            f"{emoji} **{nome}** atingiu R$ {preco_atual_brl:,.2f}\n"
+                            f"🎯 **Preço alvo**: R$ {preco_alvo_brl:,.2f}\n"
+                            f"📈 **Variação**: {variacao:+.2f}%\n"
+                            f"💵 **USD/BRL**: R$ {self.taxa_cambio:.2f}\n\n"
                             f"💡 _Hora de considerar realizar lucros!_"
                         )
                         alertas_ativos.append(alerta_msg)
@@ -81,9 +108,9 @@ class CriptoAlertas:
         
         # Envia alertas individuais (mais visíveis)
         for alerta in alertas_ativos:
-            print(f"📤 Enviando alerta para {alerta.split()[3]}...")  # Pega o nome da cripto
+            print(f"📤 Enviando alerta para {alerta.split()[3]}...")
             self.telegram.enviar_mensagem(alerta)
-            time.sleep(2)  # Delay entre alertas
+            time.sleep(2)
         
         # Envia relatório completo
         if alertas_ativos:
@@ -91,7 +118,7 @@ class CriptoAlertas:
         else:
             relatorio += "✅ **Nenhum alerta atingido no momento**\n"
         
-        relatorio += f"\n🎯 Monitorando {len(CRIPTO_ALERTAS)} alvos de preço"
+        relatorio += f"\n🎯 Monitorando {len(CRIPTO_ALERTAS)} alvos de preço em REAIS"
         
         # Envia relatório
         sucesso = self.telegram.enviar_mensagem(relatorio)
@@ -106,6 +133,7 @@ class CriptoAlertas:
     def executar_monitoramento_continuo(self):
         """Executa monitoramento contínuo (para teste local)"""
         print("🚀 Iniciando monitoramento contínuo de criptomoedas...")
+        print("💵 Preços em REAIS (BRL)")
         print("⏰ Verificando a cada 60 segundos")
         print("🛑 Pressione Ctrl+C para parar\n")
         
