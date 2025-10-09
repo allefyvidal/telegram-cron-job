@@ -39,3 +39,6 @@ CRIPTO_CONFIG = {
     'alertas_24h': True,
     'variacao_alerta': 5,  # % para disparar alerta
 }
+
+# Adicione temporariamente no final do bot_main.py:
+print("🪙 Criptos configuradas:", list(CRIPTO_MONITORAR.keys()))
