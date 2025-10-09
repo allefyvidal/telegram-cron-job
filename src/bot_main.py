@@ -1,5 +1,5 @@
 """
-💎💎💎💎💎 CRIPTO 💎💎💎💎💎💎💎
+🤖 BOT CRIPTO - Alertas de Preço em REAIS - ARB CORRIGIDO!
 """
 
 import os
@@ -8,6 +8,7 @@ import yfinance as yf
 from datetime import datetime
 import time
 import pytz
+import requests
 
 # Adiciona o diretório atual ao path para imports
 sys.path.append(os.path.dirname(__file__))
@@ -32,23 +33,53 @@ class CriptoAlertas:
                 print(f"💵 Taxa USD/BRL: R$ {taxa:.2f}")
                 return round(float(taxa), 2)
             else:
-                print("⚠️  Usando taxa padrão USD/BRL: 5.37")
+                print("⚠️  Usando taxa fixa USD/BRL: 5.38")
                 return SETTINGS['dolar_para_real']
                 
         except Exception as e:
             print(f"❌ Erro ao buscar taxa dólar: {e}")
-            print("⚠️  Usando taxa padrão USD/BRL: 5.37")
+            print("⚠️  Usando taxa fixa USD/BRL: 5.38")
             return SETTINGS['dolar_para_real']
     
-    def obter_preco_cripto_brl(self, simbolo: str) -> float:
+    def obter_preco_arbitrum_binance(self) -> float:
+        """Obtém preço do Arbitrum direto da Binance API"""
+        try:
+            print("🔍 Buscando ARB na Binance...")
+            url = "https://api.binance.com/api/v3/ticker/price"
+            params = {"symbol": "ARBUSDT"}  # ARB/USDT na Binance
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                preco_usd = float(data['price'])
+                print(f"✅ ARB Binance: ${preco_usd:.4f}")
+                return preco_usd
+            else:
+                print(f"❌ Erro Binance API: {response.status_code}")
+                return 0.0
+                
+        except Exception as e:
+            print(f"❌ Erro ao buscar ARB: {e}")
+            return 0.0
+    
+    def obter_preco_cripto_brl(self, simbolo: str, corretor: str = "yfinance") -> float:
         """Obtém preço atual da criptomoeda em REAIS"""
         try:
-            # Obtém preço em USD
-            ticker = yf.Ticker(simbolo)
-            info = ticker.history(period="1d", interval="1m")
+            if corretor == "binance":
+                # Para Arbitrum - usa Binance
+                preco_usd = self.obter_preco_arbitrum_binance()
+            else:
+                # Para outras - usa Yahoo Finance
+                ticker = yf.Ticker(simbolo)
+                info = ticker.history(period="1d", interval="1m")
+                
+                if not info.empty:
+                    preco_usd = info['Close'].iloc[-1]
+                else:
+                    return 0.0
             
-            if not info.empty:
-                preco_usd = info['Close'].iloc[-1]
+            if preco_usd > 0:
                 # Converte para BRL
                 taxa_cambio = self.obter_taxa_dolar_real()
                 preco_brl = preco_usd * taxa_cambio
@@ -79,11 +110,12 @@ class CriptoAlertas:
             simbolo = info["simbolo"]
             preco_alvo_brl = info["preco_alvo"]
             emoji = info["emoji"]
+            corretor = info.get("corretor", "yfinance")
             
-            preco_atual_brl = self.obter_preco_cripto_brl(simbolo)
+            preco_atual_brl = self.obter_preco_cripto_brl(simbolo, corretor)
             
             if preco_atual_brl > 0:
-                # Status atual - EMOJIS CORRETOS!
+                # Status atual
                 if preco_atual_brl >= preco_alvo_brl:
                     status = "🎯 ATINGIU ALVO!"
                     status_emoji = "🚨"
