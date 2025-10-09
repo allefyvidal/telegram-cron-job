@@ -1,5 +1,5 @@
 """
-💎💎💎💎💎 CRIPTO 💎💎💎💎💎💎💎
+🤖 BOT CRIPTO - Alertas de Preço em REAIS
 """
 
 import os
@@ -13,19 +13,22 @@ BOT_CONFIG = {
 # Criptomoedas com preços-alvo específicos EM REAIS
 CRIPTO_ALERTAS = {
     "Arbitrum": {
-        "simbolo": "ARB-USD",  # VOLTEI para USD mas convertemos!
+        "simbolo": "ARB-USD",  
         "preco_alvo": 2.40,    # EM REAIS
-        "emoji": "🔵"
+        "emoji": "🔵",
+        "corretor": "binance"  # Vamos usar API diferente para ARB
     },
     "Cosmos": {
-        "simbolo": "ATOM-USD", # VOLTEI para USD mas convertemos!
+        "simbolo": "ATOM-USD", 
         "preco_alvo": 24.86,   # EM REAIS
-        "emoji": "⚛️"
+        "emoji": "⚛️",
+        "corretor": "yfinance"
     },
     "Cardano": {
-        "simbolo": "ADA-USD",  # VOLTEI para USD mas convertemos!
+        "simbolo": "ADA-USD",
         "preco_alvo": 4.70,    # EM REAIS
-        "emoji": "🔷"
+        "emoji": "🔷",
+        "corretor": "yfinance"
     }
 }
 
@@ -33,5 +36,5 @@ CRIPTO_ALERTAS = {
 SETTINGS = {
     'timeout': 15,
     'check_interval': 60,
-    'dolar_para_real': 5.37,  # Taxa fixa que funcionou
+    'dolar_para_real': 5.38,  # Taxa atual que funcionou
 }
